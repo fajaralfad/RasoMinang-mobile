@@ -10,7 +10,7 @@
 
 ## 📋 Deskripsi
 **Minang Food Classifier** adalah aplikasi **Flutter** yang menggunakan model **MobileNetV3** untuk mengklasifikasikan makanan khas Minangkabau.  
-Aplikasi ini mampu mengenali **9 jenis makanan tradisional Minangkabau** dengan akurasi tinggi melalui integrasi dengan **FastAPI backend** berbasis machine learning.
+Aplikasi ini mampu mengenali **9 jenis makanan tradisional Minangkabau** dengan akurasi tinggi melalui integrasi dengan **FastAPI backend**.
 
 ---
 
