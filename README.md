@@ -32,20 +32,11 @@ Aplikasi ini mampu mengenali **9 jenis makanan tradisional Minangkabau** dengan 
 
 ## 🚀 Fitur
 
-### ✨ Core Features
 - 🎯 **Klasifikasi Real-time** – Upload gambar dan dapatkan hasil prediksi instan  
 - 📷 **Multiple Source Input** – Kamera & galeri  
 - 📊 **Confidence Score Visualization** – Warna sesuai tingkat kepercayaan  
 - 📈 **Probability Distribution View** – Semua probabilitas kelas makanan  
 - 💾 **History Tracking** – Riwayat prediksi tersimpan secara lokal  
-
-### 🛠️ Technical Features
-- 🏗️ **Clean Architecture** – Struktur kode modular dan scalable  
-- 🌐 **REST API Integration** – Koneksi backend FastAPI  
-- 📱 **Responsive UI** – Optimal di berbagai ukuran layar  
-- 🎨 **Material Design 3** – Tampilan modern & ramah pengguna  
-- 🔒 **API Key Authentication** – Akses aman ke backend  
-- ⚡ **Performance Optimized** – Kompresi dan caching gambar 
 
 ## 🚀 Installation & Setup
 
@@ -76,30 +67,6 @@ class ApiConstants {
 }
 ```
 
-### 🎯 Cara Penggunaan
-
-- Buka aplikasi dan tap “Pilih Gambar”
-- Pilih sumber: Kamera atau Galeri
-- Tunggu proses klasifikasi
-- Lihat hasil beserta confidence score
-- Akses riwayat prediksi di ikon History
-
-### ▶️ Jalankan Aplikasi dan 🧪 Testing
-```bash
-flutter run
-flutter test
-```
-## 🔗 Links
-
-### 🧠 [Backend & Model Repository: FastAPI + MobileNetV3 (Fine-tuning & API Deployment)](https://github.com/fajaralfad/klasifikasi-makanan-minangkabau-mobilenetV3)
-
-Berisi model **MobileNetV3** yang telah di-*fine-tune* serta implementasi **FastAPI** untuk menyediakan layanan klasifikasi makanan Minangkabau.  
-Model sudah termasuk di dalam repository ini bersama dengan backend.
-
----
-
 ### 📑 [API Documentation: Swagger UI](https://klasifikasi-makanan-minangkabau.up.railway.app)
 
 Dapat diakses melalui endpoint **`/docs`** saat backend dijalankan secara lokal atau di server (Railway).
-
-
