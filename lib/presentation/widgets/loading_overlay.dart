@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-/// Widget overlay loading yang menutupi seluruh screen
 class LoadingOverlay extends StatelessWidget {
   final String? message;
 
@@ -223,7 +222,6 @@ class LoadingOverlayHelper {
   }
 }
 
-/// Widget wrapper untuk dengan mudah menambahkan loading overlay
 class LoadingOverlayHandler extends StatelessWidget {
   final Widget child;
   final bool isLoading;

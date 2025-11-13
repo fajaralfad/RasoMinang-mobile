@@ -27,6 +27,8 @@ class _HomeScreenState extends State<HomeScreen> {
   void _showImagePicker() {
     showModalBottomSheet(
       context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
       builder: (context) => ImagePickerBottomSheet(
         onImageSelected: _classifyImage,
         onCameraSelected: _openCamera,
@@ -51,21 +53,33 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final size = MediaQuery.of(context).size;
+    final isSmallScreen = size.width < 360;
+
     return Scaffold(
-      appBar: GradientAppBar(
+      appBar: HomeAppBar( 
         title: 'Minang Food Classifier',
         actions: [
-          IconButton(
-            icon: const Icon(Icons.history, color: Colors.white),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const HistoryScreen(),
-                ),
-              );
-            },
-            tooltip: 'Riwayat Prediksi',
+          Container(
+            margin: const EdgeInsets.only(right: 8),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.2),
+              shape: BoxShape.circle,
+            ),
+            child: IconButton(
+              icon: const Icon(Icons.history, color: Colors.white),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const HistoryScreen(),
+                  ),
+                );
+              },
+              tooltip: 'Riwayat Prediksi',
+            ),
           ),
         ],
       ),
@@ -74,15 +88,18 @@ class _HomeScreenState extends State<HomeScreen> {
           return Stack(
             children: [
               SingleChildScrollView(
-                padding: const EdgeInsets.all(16),
+                padding: EdgeInsets.symmetric(
+                  horizontal: isSmallScreen ? 12 : 16,
+                  vertical: 16,
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    _buildHeaderSection(),
-                    const SizedBox(height: 32),
-                    _buildActionSection(context, provider),
-                    const SizedBox(height: 32),
-                    _buildResultSection(provider),
+                    _buildHeaderSection(context, size, isSmallScreen),
+                    SizedBox(height: isSmallScreen ? 24 : 32),
+                    _buildActionSection(context, provider, size, isSmallScreen),
+                    SizedBox(height: isSmallScreen ? 24 : 32),
+                    _buildResultSection(provider, isDark),
                   ],
                 ),
               ),
@@ -94,25 +111,34 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildHeaderSection() {
+  Widget _buildHeaderSection(BuildContext context, Size size, bool isSmallScreen) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
     return Column(
       children: [
         Container(
-          width: 140,
-          height: 140,
+          width: isSmallScreen ? 100 : 140,
+          height: isSmallScreen ? 100 : 140,
           decoration: BoxDecoration(
             gradient: LinearGradient(
-              colors: [
-                Theme.of(context).primaryColor.withOpacity(0.2),
-                Theme.of(context).primaryColor.withOpacity(0.05),
-              ],
+              colors: isDark
+                  ? [
+                      Colors.grey.shade800.withOpacity(0.3),
+                      Colors.grey.shade900.withOpacity(0.1),
+                    ]
+                  : [
+                      Theme.of(context).primaryColor.withOpacity(0.2),
+                      Theme.of(context).primaryColor.withOpacity(0.05),
+                    ],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
             shape: BoxShape.circle,
             boxShadow: [
               BoxShadow(
-                color: Theme.of(context).primaryColor.withOpacity(0.3),
+                color: isDark 
+                    ? Colors.black.withOpacity(0.5)
+                    : Theme.of(context).primaryColor.withOpacity(0.3),
                 blurRadius: 20,
                 offset: const Offset(0, 10),
               ),
@@ -121,17 +147,17 @@ class _HomeScreenState extends State<HomeScreen> {
           child: Container(
             margin: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: isDark ? Colors.grey.shade800 : Colors.white,
               shape: BoxShape.circle,
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
+                  color: Colors.black.withOpacity(isDark ? 0.3 : 0.1),
                   blurRadius: 10,
                   offset: const Offset(0, 4),
                 ),
               ],
             ),
-            padding: const EdgeInsets.all(16),
+            padding: EdgeInsets.all(isSmallScreen ? 12 : 16),
             child: ClipOval(
               child: Image.asset(
                 'assets/images/icon-minang.png',
@@ -139,7 +165,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 errorBuilder: (context, error, stackTrace) {
                   return Icon(
                     Icons.restaurant,
-                    size: 60,
+                    size: isSmallScreen ? 40 : 60,
                     color: Theme.of(context).primaryColor,
                   );
                 },
@@ -147,58 +173,80 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ),
         ),
-        const SizedBox(height: 16),
+        SizedBox(height: isSmallScreen ? 12 : 16),
         Text(
           'Klasifikasi Makanan Minangkabau',
-          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+          style: Theme.of(context).textTheme.titleLarge?.copyWith(
             fontWeight: FontWeight.bold,
+            fontSize: isSmallScreen ? 18 : 22,
           ),
           textAlign: TextAlign.center,
         ),
-        const SizedBox(height: 8),
-        Text(
-          'Unggah foto makanan untuk mengidentifikasi jenis makanan Minangkabau tradisional',
-          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-            color: Colors.grey[600],
+        SizedBox(height: isSmallScreen ? 6 : 8),
+        Padding(
+          padding: EdgeInsets.symmetric(horizontal: isSmallScreen ? 8 : 16),
+          child: Text(
+            'Unggah foto makanan untuk mengidentifikasi jenis makanan Minangkabau tradisional',
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
+              fontSize: isSmallScreen ? 13 : 14,
+            ),
+            textAlign: TextAlign.center,
           ),
-          textAlign: TextAlign.center,
         ),
       ],
     );
   }
 
-  Widget _buildActionSection(BuildContext context, ClassificationProvider provider) {
+  Widget _buildActionSection(BuildContext context, ClassificationProvider provider, Size size, bool isSmallScreen) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
     return Card(
-      elevation: 4,
+      elevation: isDark ? 2 : 4,
+      color: isDark ? Colors.grey.shade800 : Colors.white,
       child: Padding(
-        padding: const EdgeInsets.all(24),
+        padding: EdgeInsets.all(isSmallScreen ? 16 : 24),
         child: Column(
           children: [
             Icon(
               Icons.photo_camera,
-              size: 64,
+              size: isSmallScreen ? 48 : 64,
               color: Theme.of(context).primaryColor,
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: isSmallScreen ? 12 : 16),
             Text(
               'Pilih Gambar Makanan',
-              style: Theme.of(context).textTheme.titleLarge,
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                fontSize: isSmallScreen ? 18 : 20,
+              ),
             ),
-            const SizedBox(height: 8),
+            SizedBox(height: isSmallScreen ? 4 : 8),
             Text(
               'Gunakan kamera atau pilih dari galeri',
-              style: Theme.of(context).textTheme.bodyMedium,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
+              ),
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 24),
+            SizedBox(height: isSmallScreen ? 16 : 24),
             SizedBox(
               width: double.infinity,
               child: ElevatedButton.icon(
                 onPressed: _showImagePicker,
                 icon: const Icon(Icons.add_photo_alternate),
-                label: const Text('Pilih Gambar'),
+                label: Text(
+                  'Pilih Gambar',
+                  style: TextStyle(
+                    fontSize: isSmallScreen ? 14 : 16,
+                  ),
+                ),
                 style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  padding: EdgeInsets.symmetric(
+                    vertical: isSmallScreen ? 14 : 16,
+                    horizontal: 24,
+                  ),
+                  backgroundColor: Theme.of(context).primaryColor,
+                  foregroundColor: Colors.white,
                 ),
               ),
             ),
@@ -208,22 +256,24 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildResultSection(ClassificationProvider provider) {
+  Widget _buildResultSection(ClassificationProvider provider, bool isDark) {
     if (provider.error != null) {
       return Card(
-        color: Colors.red[50],
+        color: isDark ? Colors.red.shade900.withOpacity(0.3) : Colors.red.shade50,
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Column(
             children: [
               Row(
                 children: [
-                  Icon(Icons.error, color: Colors.red[700]),
+                  Icon(Icons.error, color: isDark ? Colors.red.shade300 : Colors.red.shade700),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
                       provider.error!,
-                      style: TextStyle(color: Colors.red[700]),
+                      style: TextStyle(
+                        color: isDark ? Colors.red.shade300 : Colors.red.shade700,
+                      ),
                     ),
                   ),
                 ],
@@ -233,6 +283,12 @@ class _HomeScreenState extends State<HomeScreen> {
                 width: double.infinity,
                 child: OutlinedButton(
                   onPressed: _showImagePicker,
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: isDark ? Colors.red.shade300 : Colors.red.shade700,
+                    side: BorderSide(
+                      color: isDark ? Colors.red.shade300 : Colors.red.shade700,
+                    ),
+                  ),
                   child: const Text('Coba Lagi'),
                 ),
               ),

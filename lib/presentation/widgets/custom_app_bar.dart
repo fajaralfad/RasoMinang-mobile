@@ -15,6 +15,12 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   final TextStyle? titleStyle;
   final Widget? flexibleSpace;
   final double? toolbarHeight;
+  final bool showDivider;
+  final Gradient? gradient;
+  final Widget? titleWidget;
+  final double? leadingWidth;
+  final ShapeBorder? shape;
+  final bool transparent;
 
   const CustomAppBar({
     super.key,
@@ -25,13 +31,19 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
     this.centerTitle = true,
     this.backgroundColor,
     this.textColor,
-    this.elevation = 1,
+    this.elevation = 0,
     this.leading,
     this.automaticallyImplyLeading = true,
     this.titleSpacing,
     this.titleStyle,
     this.flexibleSpace,
     this.toolbarHeight,
+    this.showDivider = false,
+    this.gradient,
+    this.titleWidget,
+    this.leadingWidth,
+    this.shape,
+    this.transparent = false,
   });
 
   @override
@@ -39,257 +51,201 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return AppBar(
-      title: Text(
-        title,
-        style: titleStyle ?? TextStyle(
-          color: textColor ?? Theme.of(context).colorScheme.onSurface,
-          fontWeight: FontWeight.w600,
-          fontSize: 18,
-        ),
-      ),
+      title:
+          titleWidget ??
+          Text(
+            title,
+            style:
+                titleStyle ??
+                TextStyle(
+                  color: textColor ?? (isDark ? Colors.white : Colors.black87),
+                  fontWeight: FontWeight.w600,
+                  fontSize: 18,
+                  letterSpacing: -0.5,
+                ),
+          ),
       leading: _buildLeading(context),
-      actions: actions,
+      actions: _buildActions(),
       centerTitle: centerTitle,
-      backgroundColor: backgroundColor ?? Theme.of(context).appBarTheme.backgroundColor,
+      backgroundColor: _getBackgroundColor(theme),
       elevation: elevation,
       automaticallyImplyLeading: automaticallyImplyLeading,
       titleSpacing: titleSpacing,
-      flexibleSpace: flexibleSpace,
+      flexibleSpace: _buildFlexibleSpace(),
       toolbarHeight: toolbarHeight,
       iconTheme: IconThemeData(
-        color: textColor ?? Theme.of(context).colorScheme.onSurface,
+        color: textColor ?? (isDark ? Colors.white : Colors.black87),
       ),
+      leadingWidth: leadingWidth,
+      shape:
+          shape ??
+          (showDivider
+              ? Border(
+                bottom: BorderSide(
+                  color: isDark ? Colors.grey.shade800 : Colors.grey.shade300,
+                  width: 0.5,
+                ),
+              )
+              : null),
+      surfaceTintColor: Colors.transparent,
     );
   }
 
   Widget? _buildLeading(BuildContext context) {
     if (leading != null) return leading;
-    
+
     if (!showBackButton) return null;
-    
-    return IconButton(
-      icon: const Icon(Icons.arrow_back),
-      onPressed: onBackPressed ?? () => Navigator.of(context).pop(),
-      tooltip: 'Kembali',
+
+    return Container(
+      margin: const EdgeInsets.all(8),
+      decoration: BoxDecoration(
+        color:
+            Theme.of(context).brightness == Brightness.dark
+                ? Colors.grey.withOpacity(0.2)
+                : Colors.grey.withOpacity(0.1),
+        shape: BoxShape.circle,
+      ),
+      child: IconButton(
+        icon: const Icon(Icons.arrow_back_rounded),
+        onPressed: onBackPressed ?? () => Navigator.of(context).pop(),
+        tooltip: 'Kembali',
+        iconSize: 20,
+        padding: EdgeInsets.zero,
+      ),
+    );
+  }
+
+  List<Widget>? _buildActions() {
+    if (actions == null) return null;
+
+    return actions!.map((action) {
+      return Container(margin: const EdgeInsets.only(right: 8), child: action);
+    }).toList();
+  }
+
+  Color? _getBackgroundColor(ThemeData theme) {
+    if (transparent) return Colors.transparent;
+    if (gradient != null) return Colors.transparent;
+    return backgroundColor ??
+        theme.appBarTheme.backgroundColor ??
+        theme.scaffoldBackgroundColor;
+  }
+
+  Widget? _buildFlexibleSpace() {
+    if (gradient != null) {
+      return Container(decoration: BoxDecoration(gradient: gradient));
+    }
+    return flexibleSpace;
+  }
+}
+
+class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
+  final String title;
+  final List<Widget>? actions;
+  final Gradient? gradient;
+
+  const HomeAppBar({
+    super.key,
+    required this.title,
+    this.actions,
+    this.gradient,
+  });
+
+  @override
+  Size get preferredSize => const Size.fromHeight(kToolbarHeight);
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return CustomAppBar(
+      title: title,
+      showBackButton: false,
+      actions: actions,
+      backgroundColor: Colors.transparent,
+      elevation: 0,
+      gradient:
+          gradient ??
+          (isDark
+              ? LinearGradient(
+                colors: [Colors.grey.shade900, Colors.black],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              )
+              : const LinearGradient(
+                colors: [Color(0xFFFE8C00), Color(0xFF764ba2)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              )),
+      textColor: Colors.white,
+      titleStyle: const TextStyle(
+        color: Colors.white,
+        fontWeight: FontWeight.w600,
+        fontSize: 18,
+        letterSpacing: -0.5,
+      ),
     );
   }
 }
 
-/// Custom App Bar dengan gradient background
+/// App Bar dengan gradient background profesional
 class GradientAppBar extends StatelessWidget implements PreferredSizeWidget {
   final String title;
   final List<Widget>? actions;
-  final Gradient gradient;
+  final Gradient? gradient;
   final bool showBackButton;
   final VoidCallback? onBackPressed;
+  final double? height;
 
   const GradientAppBar({
     super.key,
     required this.title,
     this.actions,
-    this.gradient = const LinearGradient(
-      colors: [Color(0xFFFE8C00), Color(0xFFF83600)],
-      begin: Alignment.topLeft,
-      end: Alignment.bottomRight,
-    ),
+    this.gradient,
     this.showBackButton = true,
     this.onBackPressed,
+    this.height,
   });
 
   @override
-  Size get preferredSize => const Size.fromHeight(kToolbarHeight);
+  Size get preferredSize => Size.fromHeight(height ?? kToolbarHeight);
 
   @override
   Widget build(BuildContext context) {
-    return AppBar(
-      title: Text(
-        title,
-        style: const TextStyle(
-          color: Colors.white,
-          fontWeight: FontWeight.bold,
-          fontSize: 20,
-        ),
-      ),
-      leading: showBackButton ? IconButton(
-        icon: const Icon(Icons.arrow_back, color: Colors.white),
-        onPressed: onBackPressed ?? () => Navigator.of(context).pop(),
-      ) : null,
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return CustomAppBar(
+      title: title,
       actions: actions,
-      centerTitle: true,
+      showBackButton: showBackButton,
+      onBackPressed: onBackPressed,
       backgroundColor: Colors.transparent,
       elevation: 0,
-      flexibleSpace: Container(
-        decoration: BoxDecoration(
-          gradient: gradient,
-        ),
+      toolbarHeight: height ?? kToolbarHeight,
+      gradient:
+          gradient ??
+          (isDark
+              ? LinearGradient(
+                colors: [Colors.grey.shade800, Colors.grey.shade900],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              )
+              : const LinearGradient(
+                colors: [Color(0xFF667eea), Color(0xFF764ba2)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              )),
+      textColor: Colors.white,
+      titleStyle: const TextStyle(
+        color: Colors.white,
+        fontWeight: FontWeight.w600,
+        fontSize: 18,
+        letterSpacing: -0.5,
       ),
-      iconTheme: const IconThemeData(color: Colors.white),
-    );
-  }
-}
-
-/// Custom App Bar dengan search functionality
-class SearchAppBar extends StatefulWidget implements PreferredSizeWidget {
-  final String hintText;
-  final ValueChanged<String> onSearchChanged;
-  final VoidCallback? onBackPressed;
-  final List<Widget>? actions;
-
-  const SearchAppBar({
-    super.key,
-    required this.hintText,
-    required this.onSearchChanged,
-    this.onBackPressed,
-    this.actions,
-  });
-
-  @override
-  Size get preferredSize => const Size.fromHeight(kToolbarHeight);
-
-  @override
-  State<SearchAppBar> createState() => _SearchAppBarState();
-}
-
-class _SearchAppBarState extends State<SearchAppBar> {
-  final TextEditingController _searchController = TextEditingController();
-  final FocusNode _searchFocusNode = FocusNode();
-
-  @override
-  void dispose() {
-    _searchController.dispose();
-    _searchFocusNode.dispose();
-    super.dispose();
-  }
-
-  void _onSearchChanged(String value) {
-    widget.onSearchChanged(value);
-  }
-
-  void _clearSearch() {
-    _searchController.clear();
-    widget.onSearchChanged('');
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return AppBar(
-      leading: IconButton(
-        icon: const Icon(Icons.arrow_back),
-        onPressed: widget.onBackPressed ?? () => Navigator.of(context).pop(),
-      ),
-      title: TextField(
-        controller: _searchController,
-        focusNode: _searchFocusNode,
-        onChanged: _onSearchChanged,
-        decoration: InputDecoration(
-          hintText: widget.hintText,
-          border: InputBorder.none,
-          hintStyle: TextStyle(
-            color: Colors.white.withOpacity(0.7),
-          ),
-          suffixIcon: _searchController.text.isNotEmpty
-              ? IconButton(
-                  icon: const Icon(Icons.clear, color: Colors.white),
-                  onPressed: _clearSearch,
-                )
-              : null,
-        ),
-        style: const TextStyle(color: Colors.white),
-        cursorColor: Colors.white,
-      ),
-      actions: widget.actions,
-      backgroundColor: Theme.of(context).primaryColor,
-      elevation: 0,
-      iconTheme: const IconThemeData(color: Colors.white),
-    );
-  }
-}
-
-/// Custom App Bar dengan tab navigation
-class TabbedAppBar extends StatelessWidget implements PreferredSizeWidget {
-  final String title;
-  final List<Tab> tabs;
-  final TabController? tabController;
-  final List<Widget>? actions;
-  final bool showBackButton;
-
-  const TabbedAppBar({
-    super.key,
-    required this.title,
-    required this.tabs,
-    this.tabController,
-    this.actions,
-    this.showBackButton = true,
-  });
-
-  @override
-  Size get preferredSize => const Size.fromHeight(kToolbarHeight * 2);
-
-  @override
-  Widget build(BuildContext context) {
-    return AppBar(
-      title: Text(title),
-      leading: showBackButton ? IconButton(
-        icon: const Icon(Icons.arrow_back),
-        onPressed: () => Navigator.of(context).pop(),
-      ) : null,
-      actions: actions,
-      bottom: TabBar(
-        controller: tabController,
-        tabs: tabs,
-        indicatorColor: Colors.white,
-        labelStyle: const TextStyle(
-          fontWeight: FontWeight.bold,
-        ),
-      ),
-    );
-  }
-}
-
-/// Custom App Bar untuk detail screen dengan hero animation
-class DetailAppBar extends StatelessWidget implements PreferredSizeWidget {
-  final String title;
-  final String heroTag;
-  final List<Widget>? actions;
-  final VoidCallback? onBackPressed;
-
-  const DetailAppBar({
-    super.key,
-    required this.title,
-    required this.heroTag,
-    this.actions,
-    this.onBackPressed,
-  });
-
-  @override
-  Size get preferredSize => const Size.fromHeight(kToolbarHeight);
-
-  @override
-  Widget build(BuildContext context) {
-    return AppBar(
-      leading: IconButton(
-        icon: Hero(
-          tag: heroTag,
-          child: const Icon(Icons.arrow_back),
-        ),
-        onPressed: onBackPressed ?? () => Navigator.of(context).pop(),
-      ),
-      title: Hero(
-        tag: '$heroTag-title',
-        child: Material(
-          color: Colors.transparent,
-          child: Text(
-            title,
-            style: const TextStyle(
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ),
-      ),
-      actions: actions,
-      elevation: 0,
-      backgroundColor: Colors.transparent,
     );
   }
 }
