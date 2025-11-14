@@ -1,3 +1,4 @@
+// providers/classification_provider.dart
 import 'package:flutter/foundation.dart';
 import 'package:klasifikasi_makanan_minang/data/models/prediction_response.dart';
 import 'package:klasifikasi_makanan_minang/domain/entities/prediction_entity.dart';
@@ -17,13 +18,17 @@ class ClassificationProvider with ChangeNotifier {
   PredictionResponse? _lastPrediction;
   String? _error;
   List<PredictionEntity> _predictionHistory = [];
+  bool _isHistoryLoading = false;
 
   bool get isLoading => _isLoading;
+  bool get isHistoryLoading => _isHistoryLoading;
   PredictionResponse? get lastPrediction => _lastPrediction;
   String? get error => _error;
   List<PredictionEntity> get predictionHistory => _predictionHistory;
 
   Future<void> classifyImage(String imagePath) async {
+    if (_isLoading) return;
+
     _isLoading = true;
     _error = null;
     notifyListeners();
@@ -34,7 +39,6 @@ class ClassificationProvider with ChangeNotifier {
       if (response.success && response.data != null) {
         _lastPrediction = response;
         
-        // Save to history
         final prediction = PredictionEntity(
           id: DateTime.now().millisecondsSinceEpoch.toString(),
           predictedClass: response.data!.predictedClass,
@@ -45,12 +49,15 @@ class ClassificationProvider with ChangeNotifier {
         );
         
         await repository.savePredictionToHistory(prediction);
-        await loadPredictionHistory();
+        await _loadPredictionHistoryImmediate();
+        
+        print('Prediction saved to history: ${prediction.predictedClass}');
       } else {
         _error = response.error ?? 'Classification failed';
       }
     } catch (e) {
-      _error = e.toString();
+      _error = 'Error classifying image: $e';
+      print('Classification error: $e');
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -58,8 +65,30 @@ class ClassificationProvider with ChangeNotifier {
   }
 
   Future<void> loadPredictionHistory() async {
-    _predictionHistory = await repository.getPredictionHistory();
+    if (_isHistoryLoading) return;
+    
+    _isHistoryLoading = true;
     notifyListeners();
+
+    try {
+      _predictionHistory = await repository.getPredictionHistory();
+      print('Loaded ${_predictionHistory.length} predictions from history');
+    } catch (e) {
+      _error = 'Error loading history: $e';
+      print('History loading error: $e');
+    } finally {
+      _isHistoryLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> _loadPredictionHistoryImmediate() async {
+    try {
+      _predictionHistory = await repository.getPredictionHistory();
+      print('Immediate reload: ${_predictionHistory.length} predictions');
+    } catch (e) {
+      print('Immediate history reload error: $e');
+    }
   }
 
   void clearError() {
@@ -73,8 +102,26 @@ class ClassificationProvider with ChangeNotifier {
   }
 
   Future<void> clearPredictionHistory() async {
-  await repository.clearPredictionHistory();
-  _predictionHistory.clear();
-  notifyListeners();
-}
+    try {
+      await repository.clearPredictionHistory();
+      _predictionHistory.clear();
+      notifyListeners();
+      print('Prediction history cleared');
+    } catch (e) {
+      _error = 'Error clearing history: $e';
+      notifyListeners();
+    }
+  }
+
+  bool isPredictionInHistory(String imagePath) {
+    return _predictionHistory.any((prediction) => prediction.imagePath == imagePath);
+  }
+
+  PredictionEntity? getPredictionById(String id) {
+    try {
+      return _predictionHistory.firstWhere((prediction) => prediction.id == id);
+    } catch (e) {
+      return null;
+    }
+  }
 }

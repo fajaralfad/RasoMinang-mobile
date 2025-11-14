@@ -29,56 +29,69 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> _initializeApp() async {
     await Provider.of<HomeProvider>(context, listen: false).initializeApp();
-    await Provider.of<ClassificationProvider>(context, listen: false)
-        .loadPredictionHistory();
+    await Provider.of<ClassificationProvider>(
+      context,
+      listen: false,
+    ).loadPredictionHistory();
   }
 
   void _showImagePicker() {
-    Provider.of<HomeProvider>(context, listen: false)
-        .logInteraction('image_picker_opened');
-    
+    Provider.of<HomeProvider>(
+      context,
+      listen: false,
+    ).logInteraction('image_picker_opened');
+
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
-      builder: (context) => ImagePickerBottomSheet(
-        onImageSelected: _classifyImage,
-        onCameraSelected: _openCamera,
-      ),
+      builder:
+          (context) => ImagePickerBottomSheet(
+            onImageSelected: _classifyImage,
+            onCameraSelected: _openCamera,
+          ),
     );
   }
 
-  void _classifyImage(String imagePath) {
-    Provider.of<HomeProvider>(context, listen: false)
-        .logInteraction('image_classification_started');
-    
-    Provider.of<ClassificationProvider>(context, listen: false)
-        .classifyImage(imagePath);
+  Future<void> _classifyImage(String imagePath) async {
+    final classificationProvider = Provider.of<ClassificationProvider>(
+      context,
+      listen: false,
+    );
+    final homeProvider = Provider.of<HomeProvider>(context, listen: false);
+
+    homeProvider.logInteraction('image_classification_started');
+
+    await classificationProvider.classifyImage(imagePath);
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      classificationProvider.loadPredictionHistory();
+    });
   }
 
   void _openCamera() {
-    Provider.of<HomeProvider>(context, listen: false)
-        .logInteraction('camera_opened');
-    
+    Provider.of<HomeProvider>(
+      context,
+      listen: false,
+    ).logInteraction('camera_opened');
+
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => CameraScreen(
-          onImageCaptured: _classifyImage,
-        ),
+        builder: (context) => CameraScreen(onImageCaptured: _classifyImage),
       ),
     );
   }
 
   void _openHistory() {
-    Provider.of<HomeProvider>(context, listen: false)
-        .logInteraction('history_opened');
-    
+    Provider.of<HomeProvider>(
+      context,
+      listen: false,
+    ).logInteraction('history_opened');
+
     Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (context) => const HistoryScreen(),
-      ),
+      MaterialPageRoute(builder: (context) => const HistoryScreen()),
     );
   }
 
@@ -90,7 +103,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final isSmallScreen = size.width < 360;
 
     return Scaffold(
-      appBar: HomeAppBar( 
+      appBar: HomeAppBar(
         title: 'Minang Food Classifier',
         actions: [
           Container(
@@ -134,7 +147,8 @@ class _HomeScreenState extends State<HomeScreen> {
                   ],
                 ),
               ),
-              if (classificationProvider.isLoading || homeProvider.isInitializing) 
+              if (classificationProvider.isLoading ||
+                  homeProvider.isInitializing)
                 const LoadingOverlay(),
             ],
           );

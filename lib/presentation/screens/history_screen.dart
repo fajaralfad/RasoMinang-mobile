@@ -1,7 +1,7 @@
 // screens/history_screen.dart
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../providers/history_provider.dart';
+import '../providers/classification_provider.dart';
 import '../../presentation/widgets/history/history_item_widget.dart';
 import '../../presentation/widgets/history/empty_history_widget.dart';
 import '../../presentation/widgets/history/confirm_dialog.dart';
@@ -22,40 +22,43 @@ class _HistoryScreenState extends State<HistoryScreen> {
   }
 
   Future<void> _loadHistory() async {
-    await Provider.of<HistoryProvider>(
-      context,
-      listen: false,
-    ).loadPredictionHistory();
+    print('Loading history...');
+    await Provider.of<ClassificationProvider>(context, listen: false)
+        .loadPredictionHistory();
   }
 
   void _showClearHistoryDialog() {
     showDialog(
       context: context,
-      builder:
-          (context) => ConfirmDialog(
-            title: 'Hapus Riwayat',
-            message:
-                'Apakah Anda yakin ingin menghapus semua riwayat prediksi? Tindakan ini tidak dapat dibatalkan.',
-            confirmText: 'Hapus Semua',
-            cancelText: 'Batal',
-            onConfirm: _clearHistory,
-            confirmColor: Colors.red,
-          ),
+      builder: (context) => ConfirmDialog(
+        title: 'Hapus Riwayat',
+        message: 'Apakah Anda yakin ingin menghapus semua riwayat prediksi? Tindakan ini tidak dapat dibatalkan.',
+        confirmText: 'Hapus Semua',
+        cancelText: 'Batal',
+        onConfirm: _clearHistory,
+        confirmColor: Colors.red,
+      ),
     );
   }
 
   Future<void> _clearHistory() async {
-    await Provider.of<HistoryProvider>(
-      context,
-      listen: false,
-    ).clearPredictionHistory();
+    await Provider.of<ClassificationProvider>(context, listen: false)
+        .clearPredictionHistory();
+    
+    // Show success message
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Riwayat berhasil dihapus'),
+          backgroundColor: Colors.green,
+        ),
+      );
+    }
   }
 
   Future<void> _handleRefresh() async {
-    await Provider.of<HistoryProvider>(
-      context,
-      listen: false,
-    ).loadPredictionHistory();
+    await Provider.of<ClassificationProvider>(context, listen: false)
+        .loadPredictionHistory();
   }
 
   void _handleStartClassification() {
@@ -76,33 +79,68 @@ class _HistoryScreenState extends State<HistoryScreen> {
           ),
         ],
       ),
-      body: Consumer<HistoryProvider>(
+      body: Consumer<ClassificationProvider>(
         builder: (context, provider, child) {
-          if (provider.isLoading) {
-            return const Center(child: CircularProgressIndicator());
+          // Debug information
+          print('History Screen - Items: ${provider.predictionHistory.length}');
+          print('History Screen - Loading: ${provider.isHistoryLoading}');
+          print('History Screen - Error: ${provider.error}');
+
+          if (provider.isHistoryLoading) {
+            return const Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  CircularProgressIndicator(),
+                  SizedBox(height: 16),
+                  Text('Memuat riwayat...'),
+                ],
+              ),
+            );
           }
 
-          if (provider.hasError) {
-            return _buildErrorState(provider.errorMessage!);
+          if (provider.error != null && provider.predictionHistory.isEmpty) {
+            return _buildErrorState(provider.error!);
           }
 
-          if (provider.isEmpty) {
+          if (provider.predictionHistory.isEmpty) {
             return EmptyHistoryWidget(
               onStartClassification: _handleStartClassification,
             );
           }
 
           return RefreshIndicator(
-            onRefresh:
-                _handleRefresh, // Sekarang sudah sesuai dengan RefreshCallback
-            child: ListView.separated(
-              padding: const EdgeInsets.all(16),
-              itemCount: provider.predictions.length,
-              separatorBuilder: (context, index) => const SizedBox(height: 8),
-              itemBuilder: (context, index) {
-                final prediction = provider.predictions[index];
-                return HistoryItemWidget(prediction: prediction);
-              },
+            onRefresh: _handleRefresh,
+            child: Column(
+              children: [
+                // Header with count
+                Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Row(
+                    children: [
+                      Text(
+                        'Total: ${provider.predictionHistory.length} prediksi',
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: Colors.grey[600],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                // History list
+                Expanded(
+                  child: ListView.separated(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    itemCount: provider.predictionHistory.length,
+                    separatorBuilder: (context, index) => const SizedBox(height: 12),
+                    itemBuilder: (context, index) {
+                      final prediction = provider.predictionHistory[index];
+                      print('Rendering history item: ${prediction.predictedClass}');
+                      return HistoryItemWidget(prediction: prediction);
+                    },
+                  ),
+                ),
+              ],
             ),
           );
         },
@@ -117,7 +155,11 @@ class _HistoryScreenState extends State<HistoryScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.error_outline, size: 64, color: Colors.red),
+            const Icon(
+              Icons.error_outline,
+              size: 64,
+              color: Colors.red,
+            ),
             const SizedBox(height: 16),
             Text(
               'Terjadi Kesalahan',
